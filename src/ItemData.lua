@@ -1,0 +1,62 @@
+-- to enter any information other than this.
+
+-- https://script.google.com/macros/s/AKfycbyDKi7Kn66kpJutyY1WXnBO04Rb1rF7P0hBXmJfCtXIJjbLpned/exec
+local scriptId = "AKfycbyDKi7Kn66kpJutyY1WXnBO04Rb1rF7P0hBXmJfCtXIJjbLpned/exec"
+
+-- Touch anything below and you'll upset the script, and that's not a good thing.
+
+local url = "https://script.google.com/macros/s/" .. scriptId .. "/exec"
+local httpService = game:GetService'HttpService'
+local module = {}
+
+game:WaitForChild'NetworkServer'
+
+function decodeJson(json)
+	local jsonTab = {} pcall(function ()
+	jsonTab = httpService:JSONDecode(json)
+	end) return jsonTab
+end
+
+function encodeJson(data)
+	local jsonString = data pcall(function ()
+	jsonString = httpService:JSONEncode(data)
+	end) return jsonString
+end
+
+function doGet(sheet, key)
+	local json = httpService:GetAsync(url .. "?sheet=" .. sheet .. "&key=" .. key)
+	local data = decodeJson(json)
+	if data.result == "success" then
+		return data.value
+	else
+		-- warn("Database error:", data.error)
+		return
+	end
+end
+
+function doPost(sheet, key, data)
+	local json = httpService:UrlEncode(encodeJson(data))
+	local retJson = httpService:PostAsync(url, "sheet=" .. sheet .. "&key=" .. key .. "&value=" .. json, 2)
+	local data = decodeJson(retJson)
+	print(retJson)
+	if data.result == "success" then
+		return true
+	else
+		warn("Database error:", data.error)
+		return false
+	end
+end
+
+function module:GetDatabase(sheet)
+	local database = {}
+	function database:PostAsync(key, value)
+		return doPost(sheet, key, value)
+	end
+	function database:GetAsync(key)
+		return doGet(sheet, key)
+	end
+	return database
+end
+
+return module]]></ProtectedString>
+					<string name="ScriptGuid">{1E789556-8C8F-4101-B9BB-8E34EAC72550}
